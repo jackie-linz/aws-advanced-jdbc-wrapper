@@ -26,8 +26,8 @@ import java.util.Properties;
 
 public class AwsIamAuthenticationPostgresqlExample {
   public static final String POSTGRESQL_CONNECTION_STRING =
-      "jdbc:aws-wrapper:postgresql://db-identifier.XYZ.us-east-2.rds.amazonaws.com:5432/employees";
-  private static final String USERNAME = "john_smith";
+      "jdbc:aws-wrapper:postgresql://rds-iam-poc-nonprod.cluster-cjbyytyiqj35.ap-southeast-2.rds.amazonaws.com:5432/postgres";
+  private static final String USERNAME = "testuserb";
 
   public static void main(String[] args) throws SQLException {
 

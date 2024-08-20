@@ -16,11 +16,11 @@
 
 package software.amazon;
 
+import software.amazon.awssdk.services.sts.StsClient;
+import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
+import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
 import software.amazon.jdbc.PropertyDefinition;
 import software.amazon.jdbc.authentication.AwsCredentialsManager;
-
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -31,26 +31,26 @@ import java.util.Properties;
 
 public class AwsCredentialsManagerExample {
 
-  public static final String POSTGRESQL_URL = "db-identifier-postgres.XYZ.us-east-2.rds.amazonaws.com";
+  public static final String POSTGRESQL_URL = "rds-iam-poc-nonprod.cluster-cjbyytyiqj35.ap-southeast-2.rds.amazonaws" +
+      ".com";
   public static final String POSTGRESQL_CONNECTION_STRING =
-      "jdbc:aws-wrapper:postgresql://" + POSTGRESQL_URL + ":5432/employees";
-  private static final String POSTGRESQL_IAM_USER = "pg_iam_user";
-
-  public static final String MYSQL_URL = "db-identifier-mysql.XYZ.us-east-2.rds.amazonaws.com";
-  public static final String MYSQL_CONNECTION_STRING =
-      "jdbc:aws-wrapper:mysql://" + MYSQL_URL + ":3306/items";
-  private static final String MYSQL_IAM_USER = "mysql_iam_user";
+      "jdbc:aws-wrapper:postgresql://" + POSTGRESQL_URL + ":5432/postgres";
+  private static final String POSTGRESQL_IAM_USER = "testuserb";
 
   public static void main(String[] args) throws SQLException {
 
     // Configure AwsCredentialsManager to use EnvironmentVariableCredentialsProvider when connecting
     // to MySQL and DefaultCredentialsProvider otherwise.
     AwsCredentialsManager.setCustomHandler((hostSpec, props) -> {
-      if (MYSQL_URL.equals(hostSpec.getHost())) {
-        return EnvironmentVariableCredentialsProvider.create();
-      } else {
-        return DefaultCredentialsProvider.create();
-      }
+      StsClient stsClient = StsClient.builder().build();
+      AssumeRoleRequest req = AssumeRoleRequest.builder()
+          .roleArn("arn:aws:iam::005965230347:role/iam-poc-testuserb")
+          .roleSessionName("test123")
+          .build();
+      return StsAssumeRoleCredentialsProvider.builder()
+          .stsClient(stsClient)
+          .refreshRequest(req)
+          .build();
     });
 
     // Enable AWS IAM database authentication and configure driver property values.
@@ -62,19 +62,6 @@ public class AwsCredentialsManagerExample {
     try (Connection conn = DriverManager.getConnection(POSTGRESQL_CONNECTION_STRING, postgresProps);
          Statement statement = conn.createStatement();
          ResultSet result = statement.executeQuery("SELECT aurora_db_instance_identifier()")) {
-
-      System.out.println(Util.getResult(result));
-    }
-
-    // Enable AWS IAM database authentication and configure driver property values.
-    final Properties mysqlProps = new Properties();
-    mysqlProps.setProperty(PropertyDefinition.PLUGINS.name, "iam");
-    mysqlProps.setProperty(PropertyDefinition.USER.name, MYSQL_IAM_USER);
-
-    // Connect to MySQL
-    try (Connection conn = DriverManager.getConnection(MYSQL_CONNECTION_STRING, mysqlProps);
-         Statement statement = conn.createStatement();
-         ResultSet result = statement.executeQuery("SELECT @@aurora_server_id")) {
 
       System.out.println(Util.getResult(result));
     }
