@@ -23,6 +23,8 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.postgresql:postgresql:42.7.3")
+    implementation("software.amazon.awssdk:sts:2.25.60")
+    implementation("software.amazon.awssdk:rds:2.25.70")
     implementation(project(":aws-advanced-jdbc-wrapper"))
 
 }

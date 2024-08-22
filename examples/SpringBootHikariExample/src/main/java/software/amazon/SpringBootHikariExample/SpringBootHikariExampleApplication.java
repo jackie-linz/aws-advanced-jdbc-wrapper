@@ -18,10 +18,25 @@ package software.amazon.SpringBootHikariExample;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import software.amazon.awssdk.services.sts.StsClient;
+import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
+import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
+import software.amazon.jdbc.authentication.AwsCredentialsManager;
 
 @SpringBootApplication
 public class SpringBootHikariExampleApplication {
   public static void main(String[] args) {
+    AwsCredentialsManager.setCustomHandler((hostSpec, props) -> {
+      StsClient stsClient = StsClient.builder().build();
+      AssumeRoleRequest req = AssumeRoleRequest.builder()
+          .roleArn("arn:aws:iam::005965230347:role/iam-poc-testuserb")
+          .roleSessionName("test123")
+          .build();
+      return StsAssumeRoleCredentialsProvider.builder()
+          .stsClient(stsClient)
+          .refreshRequest(req)
+          .build();
+    });
     SpringApplication.run(SpringBootHikariExampleApplication.class, args);
   }
 }
